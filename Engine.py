@@ -5,10 +5,15 @@ from Ray import Ray
 
 class RenderEngine:
 
-    shaded = True;
+    SHADED = True;
+    SHADOWS = True;
+    MAXDEPTH = 5
+    MINDISPLACEMENT = 0.0001
 
-    def render(self, scene, shaded):
-        self.shaded = shaded;
+    def render(self, scene, SHADED, SHADOWS):
+        self.SHADED = SHADED
+        self.SHADOWS = SHADOWS;
+        
         width = scene.width
         height = scene.height
         aspectRatio = float(width) / height
@@ -30,11 +35,12 @@ class RenderEngine:
                 x = x0 + i * xdelta
                 ray = Ray(camera, Vector3D(x,y) - camera)
                 pixels.setPixel(i, j, self.raytrace(ray, scene))
-            print("{:3.0f}%".format(float(j)/float(height) * 100), end="\r")
+            print("Rendering: In Progress (", "{:0.0f}%".format(float(j)/float(height) * 100), ")", end="\r")
+        print("Rendering: Completed Successfully (100%)")    
         return pixels
 
 #function in charge of calculating all the raytracing needs    
-    def raytrace(self, ray, scene):
+    def raytrace(self, ray, scene, depth = 0):
         color = Color(0,0,0)
         distanceHit, objectHit = self.rayCollision(ray, scene)
         if objectHit is None:
@@ -42,6 +48,14 @@ class RenderEngine:
         hitPosition = ray.origin + ray.direction * distanceHit
         hitNormal = objectHit.norm(hitPosition)
         color += self.colorBlending(objectHit, hitPosition, hitNormal, scene)
+        if depth < self.MAXDEPTH :
+            newRayPosition = hitPosition + hitNormal * self.MINDISPLACEMENT
+            newRayDirection = ray.direction - 2 * ray.direction.dot(hitNormal) * hitNormal
+            newRay = Ray(newRayPosition, newRayDirection)
+
+            #Attentuation process of the ray (reducing the intensity of hitRays when hitting a surface) using the relfection coeff
+            color += self.raytrace(newRay, scene, depth+1) * objectHit.material.reflection
+
         return color
 
 #find nearest hit position (object hit by ray)
@@ -57,8 +71,8 @@ class RenderEngine:
         return (distanceMin, objectHit)
 
 #recursive color calculation in the simulation (when bouncing off)        
-    def colorBlending (self, objectHit, hitPosition, hitNormal, scene) :  
-        if not self.shaded :
+    def colorBlending (self, objectHit, hitPosition, hitNormal, scene):  
+        if not self.SHADED :
             return objectHit.material.color
 
         objectHitMaterial = objectHit.material  
@@ -70,16 +84,21 @@ class RenderEngine:
             
             rayToLight = Ray(hitPosition, light.position - hitPosition)
 
-            newColor += self.lambertianShading(objectHitMaterial, objectHitColor, hitNormal, rayToLight)
-            newColor += self.blingPhongShading(light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, 50)
+            if not self.SHADOWS :
+                newColor += self.lambertianShading(objectHitMaterial, objectHitColor, hitNormal, rayToLight)
+                newColor += self.blingPhongShading(light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, 50)
+            else :
+                (dist, hit) = self.rayCollision(rayToLight, scene)                  
+                if hit is None or (dist > (light.position - hitPosition).mag()): 
+                    newColor += self.lambertianShading(objectHitMaterial, objectHitColor, hitNormal, rayToLight)
+                    newColor += self.blingPhongShading(light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, 50)
             
-
         return newColor
 
-    def lambertianShading(self, objectHitMaterial, objectHitColor, hitNormal, rayToLight) :
+    def lambertianShading(self, objectHitMaterial, objectHitColor, hitNormal, rayToLight):
         return objectHitColor * objectHitMaterial.diffuse * max(hitNormal.dot(rayToLight.direction), 0)
     
-    def blingPhongShading(self, light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, specularExponent) :
+    def blingPhongShading(self, light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, specularExponent):
         halfVector = (rayToLight.direction + rayToCamera.direction).norm()
         return light.color * objectHitMaterial.specular * max(hitNormal.dot(halfVector), 0) ** specularExponent
 
