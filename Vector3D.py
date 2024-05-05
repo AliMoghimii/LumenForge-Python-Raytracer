@@ -1,6 +1,6 @@
 import math
 
-class Vector:
+class Vector3D:
 
     def __init__(self, x=0.0, y=0.0, z=0.0):
         self.x = x;
@@ -20,18 +20,18 @@ class Vector:
         return self/self.mag()
     
     def __add__(self, target):
-        return Vector(self.x + target.x, self.y + target.y, self.z + target.z)
+        return Vector3D(self.x + target.x, self.y + target.y, self.z + target.z)
     
     def __sub__(self, target):
-        return Vector(self.x - target.x, self.y - target.y, self.z - target.z)
+        return Vector3D(self.x - target.x, self.y - target.y, self.z - target.z)
     
     def __mul__(self, num):
-        assert not isinstance(num, Vector)
-        return Vector(self.x * num, self.y * num, self.z * num)
+        assert not isinstance(num, Vector3D)
+        return Vector3D(self.x * num, self.y * num, self.z * num)
     
     def __rmul__(self, num):
         return self.__mul__(num)
     
     def __truediv__(self, num):
-        assert not isinstance(num, Vector)
-        return Vector(self.x / num, self.y / num, self.z / num)
+        assert not isinstance(num, Vector3D)
+        return Vector3D(self.x / num, self.y / num, self.z / num)

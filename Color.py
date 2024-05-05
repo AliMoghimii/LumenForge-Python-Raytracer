@@ -4,6 +4,12 @@ class Color:
         self.r = r;
         self.g = g;
         self.b = b;
+    
+    def HexToRgb(hexValue = "#000000"):
+        r = int(hexValue[1:3], 16) / 255.0
+        g = int(hexValue[3:5], 16) / 255.0
+        b = int(hexValue[5:7], 16) / 255.0
+        return Color(r, g, b)
 
     def __str__(self):
         return "({},{},{})".format(self.r, self.g, self.b)
