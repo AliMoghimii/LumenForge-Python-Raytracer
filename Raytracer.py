@@ -6,6 +6,8 @@ from Object3D import Object3DSphere
 from Scene import Scene
 from Engine import RenderEngine
 
+import time
+
 def main():
 
     # Render Setting
@@ -14,7 +16,9 @@ def main():
     SHADOWS = True
     SHADED = True
 
-    camera = Vector3D(0, -0.4, -1)
+    timerStart = time.time()
+
+    camera = Vector3D(0, -0.3, -1)
 
     objects = [
         Object3DSphere(Vector3D(0, 10000.5, 1), 10000.0, MaterialMonochrome(Color.HexToRgb("#111111"), ambient = 0.2, reflection = 0.2)),
@@ -40,6 +44,9 @@ def main():
 
     with open("# - Rendered Image.ppm", "w") as imgFile:
         image.exportImage(imgFile)
+
+    timerEnd = time.time()
+    print("Time elapsed :", round(timerEnd - timerStart, 2), " seconds")    
 
 if __name__ == "__main__":
     main()

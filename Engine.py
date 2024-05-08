@@ -60,7 +60,7 @@ class RenderEngine:
 
 #find nearest hit position (object hit by ray)
     def rayCollision(self, ray, scene):
-        distanceMin = None
+        distanceMin = float('inf')
         objectHit = None
 
         for object in scene.objects:
@@ -83,15 +83,15 @@ class RenderEngine:
         for light in scene.lights:
             
             rayToLight = Ray(hitPosition, light.position - hitPosition)
+     
+            if self.SHADOWS:
+                (shadowDetectObjectDistance, shadowDetectObjectHit) = self.rayCollision(rayToLight, scene)   
+                if not(shadowDetectObjectHit is None or (shadowDetectObjectDistance > (light.position - hitPosition).mag())):
+                    continue 
 
-            if not self.SHADOWS :
-                newColor += self.lambertianShading(objectHitMaterial, objectHitColor, hitNormal, rayToLight)
-                newColor += self.blingPhongShading(light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, 50)
-            else :
-                (dist, hit) = self.rayCollision(rayToLight, scene)                  
-                if hit is None or (dist > (light.position - hitPosition).mag()): 
-                    newColor += self.lambertianShading(objectHitMaterial, objectHitColor, hitNormal, rayToLight)
-                    newColor += self.blingPhongShading(light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, 50)
+            newColor += self.lambertianShading(objectHitMaterial, objectHitColor, hitNormal, rayToLight)
+            newColor += self.blingPhongShading(light, objectHitMaterial, hitNormal, rayToLight, rayToCamera, 50)
+
             
         return newColor
 
